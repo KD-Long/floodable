@@ -3,7 +3,7 @@
 This project showcases WebGL shaders implemented using React Three Fiber (R3F). 
 <br>
 
-![procedural-terrain](./public/procedural-terrain.png)
+![procedural-terrain](./public/procedural-terrain2.png)
 
 ## Tech
 
