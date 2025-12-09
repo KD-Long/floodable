@@ -2,9 +2,10 @@ import { fromUrl } from "geotiff";
 import { getBBLatLon,trimToSquareArray,arrayOneDToTwoD,applyWaterDepth } from "./geoUtils";
 
 
-export default async function simpleDem(tiffSource) {
+export default async function simpleDem(tiffFile) {
 
-    const tiff = await fromUrl(tiffSource);
+    const tiff = tiffFile
+    
     const image = await tiff.getImage();
 
     // array including dimensions + 2D array elevations
@@ -25,7 +26,7 @@ export default async function simpleDem(tiffSource) {
 
     // trim the potentially rectangle 2d array back to square
     trimToSquareArray(elevation2D);
-    console.log("square elevation: ", elevation2D)
+    // console.log("square elevation: ", elevation2D)
 
 
 
@@ -53,7 +54,7 @@ export default async function simpleDem(tiffSource) {
     // console.log(getBBLatLon(-33.843413,151.197412,1000)) // waverton
     // console.log(getBBLatLon(-33.889582,151.199479,5000)) // neara
     // console.log(getBBLatLon(-33.889582,151.199479,50000)) // neara 50 km
-    console.log("neara: ",getBBLatLon(-33.889468,151.199508,20000)) // neara 20 km
+    // console.log("neara: ",getBBLatLon(-33.889468,151.199508,20000)) // neara 20 km
  
 
     // returns an object

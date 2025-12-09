@@ -8,6 +8,7 @@ import fragmentShader from '../shaders/terrain/fragment.glsl'
 
 // import { loadDEM } from '../utils/loadDEM.js';
 import simpleDem from '../utils/simpleDem.js';
+import { fromUrl } from "geotiff";
 
 
 
@@ -95,13 +96,16 @@ const Terrain = ({
         // setLoading(true);
         // setError(null);
         try {
-
             // const demResult = await simpleDem('/geoData/murray.tif') // 10km
             // const demResult = await simpleDem('/geoData/murray_3km.tif') //3km
             // const demResult = await simpleDem('/geoData/murray_1km.tif') // 1km
             // const demResult = await simpleDem('/geoData/waverton_1km.tif') // 1km
             // const demResult = await simpleDem('/geoData/neara_5km.tif') // 5km
-            const demResult = await simpleDem('/geoData/neara_20km.tif') // 5km
+            const tiffSource = "/geoData/neara_20km.tif"
+            const tiff = await fromUrl(tiffSource);
+
+
+            const demResult = await simpleDem(tiff) // 5km
 
             setDem(demResult);
 
@@ -124,7 +128,7 @@ const Terrain = ({
             let width = dem.width
             let height = dem.height
             let elevations = new Float32Array(dem.elevations)
-            console.log("elevations: ", elevations)
+            // console.log("elevations: ", elevations)
 
             // at this point we know dem has loaded successfully and we can start setting our uElevationTexture
 

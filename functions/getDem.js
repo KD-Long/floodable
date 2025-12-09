@@ -87,7 +87,7 @@ export async function onRequest(context) {
       */
       
     } catch (error) {
-      console.error('Error fetching DEM:', error);
+      console.error('Error fetching DEM [CF]:', error);
       return new Response(
         JSON.stringify({ error: error.message }),
         { 

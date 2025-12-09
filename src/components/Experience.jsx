@@ -9,6 +9,7 @@ import * as THREE from 'three'
 import { SphereGeometry } from 'three/src/Three.Core.js';
 import Board from './Board';
 import Terrain from './Terrain';
+import DEMTest from './DEMTest';
 
 const Experience = () => {
 
@@ -102,6 +103,8 @@ const Experience = () => {
         />
 
         <Board />
+
+     
 
         {/* forwarding leva controls as refs to child -> shader */}
         <Terrain
