@@ -27,7 +27,7 @@ function App() {
           fov: 35,
           near: 0.1,
           far: 100,
-          position: [-10, 6, -2]
+          position: [-14, 12, 0]
         }}
       >
         <Experience terrainDem={terrainDem} />

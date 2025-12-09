@@ -79,7 +79,8 @@ const Terrain = ({
         let geo = new THREE.PlaneGeometry(10, 10, 500, 500);
         // geo.deleteAttribute('uv'); // note we do this since we are maunally updating the csm_normal /uv in the shader
         geo.deleteAttribute('normal')
-        geo.rotateX(-Math.PI / 2); // 90 degree rotation
+        geo.rotateX(-Math.PI / 2); // 90 degree rotation makes it flat
+
 
         return geo
     }, [])
@@ -119,11 +120,11 @@ const Terrain = ({
         }
     }, []);
     //update dem when external dem changes (load success)
-    useEffect(()=>{
-        if(externalDem){
+    useEffect(() => {
+        if (externalDem) {
             setDem(externalDem)
         }
-    },[externalDem])
+    }, [externalDem])
 
     //on successful load of the dem this useffect is triggered
     useEffect(() => {
@@ -284,7 +285,7 @@ const Terrain = ({
     return (
         <>
             {/* Water */}
-            <mesh position={[0, -0.1, 0]}>
+            <mesh position={[0, 0.001, 0]}>
                 <primitive object={water} />
                 <meshPhysicalMaterial transmission={1} roughness={0.1} />
             </mesh>
@@ -292,7 +293,7 @@ const Terrain = ({
             {/* Terrain + shader */}
             {/* positioned at 0,0 */}
             {/* box is height 2 range from y = -1 -> 1 */}
-            <mesh receiveShadow castShadow >
+            <mesh receiveShadow castShadow rotation={[0, -Math.PI / 2, 0]}>
                 {/* <meshBasicMaterial /> */}
                 <CustomShaderMaterial
                     ref={csmRef}
@@ -305,6 +306,8 @@ const Terrain = ({
                     // flatShading
                     metalness={0}
                     roughness={0.5}
+                    flatShading={false} // Explicitly enable smooth shading
+
                 // color={'#85d834'}
 
                 />

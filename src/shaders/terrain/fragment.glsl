@@ -20,21 +20,22 @@ void main() {
     // so we use csm_
     // csm_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 
-    vec3 color = vec3(1.0);
+    vec3 color = vec3(uColorWaterSurface);
 
     //water (water surface < -0.1) (water deep > -1.0)
     // values close to -1 -> 0 numbers close to -0.1 -> 1 (the mixing of the color)
     // also clamped so vals under -1 get scaled the same to 0
-    float surfaceWaterMix = smoothstep(-1.0, -0.1, vPosition.y); // any value of -1.0 or greater -> 1
+    // float surfaceWaterMix = smoothstep(-1.0, -0.1, vPosition.y); // any value of -1.0 or greater -> 1
     // this maps the 0 values to uColorWaterDeep and the 1 values uColorWaterSurface and mixes between the two
-    color = mix(uColorWaterDeep, uColorWaterSurface, surfaceWaterMix);
+    // color = mix(uColorWaterDeep, uColorWaterSurface, surfaceWaterMix);
 
     // sand (-.1 -> 0.0)
     // float sandMix = step(-0.1, vPosition.y); // any value -0.1 or greater -> 1
-    // color = mix(color, uColorSand, sandMix);
+    float sandMix = smoothstep(0.0001,0.002, vPosition.y); // any value -0.1 or greater -> 1
+    color = mix(color, uColorSand, sandMix);
 
     //grass (-0.06 >)
-    float grassMix = step(0.0001, vPosition.y); // any value -0.1 or greater -> 1
+    float grassMix = step(0.002, vPosition.y); // any value -0.1 or greater -> 1
     color = mix(color, uColorGrass, grassMix);
 
     // [Rock] -> when terrain is very steep make it rock
@@ -47,7 +48,8 @@ void main() {
 
     float rockMix = vDot; // 1 at flat terrian 0 at vertical
     rockMix = 1.0 - step(0.8,rockMix); // the 1.0 - step inverts the result making it 1 on steep and 0 on flat
-    rockMix *= step(-0.06, vPosition.y); // everything below (-0.06) gets x 0 resulting in nothing under -0.06 being able to be rock
+    // rockMix *= step(-0.06, vPosition.y); // everything below (-0.06) gets x 0 resulting in nothing under -0.06 being able to be rock
+    rockMix *= step(0.002, vPosition.y); // everything below (-0.06) gets x 0 resulting in nothing under -0.06 being able to be rock
     color = mix(color, uColorRock, rockMix);// hence when we mix only the higher gradient values get the rock color
 
     //snow
