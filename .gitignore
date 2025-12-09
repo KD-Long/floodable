@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# exclude api keys
+.env
+
+# exclue geo testing data
+# geoData/*

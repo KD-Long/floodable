@@ -1,9 +1,9 @@
- # [procedural-terrain](https://procedural-terrain.kyledlong.com/)
+ # [floodable](https://floodable.kyledlong.com/)
 
 This project showcases WebGL shaders implemented using React Three Fiber (R3F). 
 <br>
 
-![procedural-terrain](./public/procedural-terrain2.png)
+![floodable](./public/floodable.png)
 
 ## Tech
 
@@ -21,13 +21,13 @@ This project showcases WebGL shaders implemented using React Three Fiber (R3F).
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/KD-Long/procedural-terrain.git
+git clone https://github.com/KD-Long/floodable.git
 ```
 
 2. Install the dependencies:
 
 ```bash
-cd procedural-terrain
+cd floodable
 npm install
 ```
 

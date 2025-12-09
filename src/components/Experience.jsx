@@ -12,7 +12,7 @@ import Terrain from './Terrain';
 
 const Experience = () => {
 
-    const sphereRef = useRef()
+
 
 
     let {
@@ -20,18 +20,24 @@ const Experience = () => {
         uStrength,
         uWarpFrequency,
         uWarpStrength,
+        uElevationScale,
+        waterLevel,
         colorWaterDeep,
         colorWaterSurface,
         colorSand,
         colorGrass,
         colorSnow,
-        colorRock
+        colorRock,
+        uSideLength
     } = useControls({
         // bgColor: { value: '#1d1f2a', label: 'Background Color' },
         uPositionFrequency: { value: 0.2, min: 0, max: 1.0, step: 0.001 },
         uStrength: { value: 2.0, min: 0.0, max: 10.0, step: 0.001 },
         uWarpFrequency: { value: 5.0, min: 0.0, max: 10.0, step: 0.001 },
         uWarpStrength: { value: 0.5, min: 0.0, max: 1.0, step: 0.001 },
+        uElevationScale: { value: 1.00, min: 0.001, max: 20.0, step: 0.01 },
+
+        waterLevel: { value: 0.0, min: -2.0, max: 2.0, step: 0.01, label: 'Water Level' },
 
         colorWaterDeep: { value: '#002b3d' },
         colorWaterSurface: { value: '#66a8ff' },
@@ -40,21 +46,10 @@ const Experience = () => {
         colorSnow: { value: '#ffffff' },
         colorRock: { value: '#bfbd8d' },
 
+        uSideLength:{ value: 2.0, min: 1.0, max: 10.0, step: 1.0,label: 'uSideLength (KM)' },
+
 
     });
-
-
-    // const MyShaderMaterial = shaderMaterial({
-    //     uTime: 0,
-    // },
-    //     vertexShader,
-    //     fragmentShader
-    // )
-    // //this exent allows it to be used as a component below
-    // // Note: When using "extend" which register custom components with the JSX reconciler, 
-    // // use lowercase names for those components, regardless of how they are initially defined.
-    // extend({ MyShaderMaterial: MyShaderMaterial })
-
 
 
 
@@ -63,7 +58,7 @@ const Experience = () => {
         const elapsedTime = state.clock.elapsedTime
 
         // sphereRef.current.rotation.x = - elapsedTime * 0.1
-        sphereRef.current.rotation.y = elapsedTime * 0.5
+        // sphereRef.current.rotation.y = elapsedTime * 0.5
 
         // update utime
         // sphereRef.current.material.uniforms.uTime.value = elapsedTime
@@ -76,6 +71,7 @@ const Experience = () => {
 
     return (<>
         <OrbitControls makeDefault enableDamping />
+
         <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
             <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
         </GizmoHelper>f
@@ -113,64 +109,21 @@ const Experience = () => {
             uStrength={uStrength}
             uWarpFrequency={uWarpFrequency}
             uWarpStrength={uWarpStrength}
+            uElevationScale={uElevationScale}
+            waterLevel={waterLevel}
             colorWaterDeep={colorWaterDeep}
             colorWaterSurface={colorWaterSurface}
             colorSand={colorSand}
             colorGrass={colorGrass}
             colorSnow={colorSnow}
             colorRock={colorRock}
+
+            uSideLength={uSideLength}
         />
 
 
 
 
-
-
-
-
-
-
-        {/* place holder for mesh with shader material */}
-        <mesh
-            ref={sphereRef}
-            position={[0, 0, 0]}
-        >
-            {/* <sphereGeometry args={[2, 64, 64]} /> */}
-            {/* <meshBasicMaterial color={'#1ffff0'} args={[{ wireframe: false }]} /> */}
-            {/* <myShaderMaterial transparent side={THREE.DoubleSide} /> */}
-        </mesh>
-
-        {/* <mesh
-            position={[0, 0, 0]}
-        >
-            <icosahedronGeometry args={[2, 5]} />
-            <meshPhysicalMaterial />
-
-
-        </mesh> */}
-
-        {/* <mesh>
-            <meshStandardMaterial />
-            <Geometry>
-                <Base scale={[6, 0.5, 0.5]}>
-                    <boxGeometry />
-                </Base>
-                <Addition scale={[0.5, 2, 0.5]}>
-                    <boxGeometry />
-                </Addition>
-                <Subtraction scale={[0.5, 0.2, 0.5]}>
-                    <sphereGeometry />
-                </Subtraction>
-            </Geometry>
-        </mesh> */}
-
-
-
-
-        {/* <mesh >
-            <planeGeometry args={[5, 5]} />
-            <meshPhysicalMaterial side={THREE.DoubleSide} />
-        </mesh> */}
 
     </>
     )

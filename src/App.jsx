@@ -3,6 +3,7 @@ import './App.css'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import Experience from './components/Experience'
+// import DEMTest from './components/DEMTest'
 
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
 
   return (
     <>
+  
       <Canvas
         // not this fixes the tone mapping (colors look better)
         onCreated={({ gl }) => {
