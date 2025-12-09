@@ -25,7 +25,8 @@ const Terrain = ({
     colorGrass,
     colorSnow,
     colorRock,
-    uSideLength
+    uSideLength,
+    externalDem // this is a prop dem value that may be passed on button load
 
 }) => {
     const csmRef = useRef();
@@ -103,23 +104,26 @@ const Terrain = ({
             // const demResult = await simpleDem('/geoData/neara_5km.tif') // 5km
             const tiffSource = "/geoData/neara_20km.tif"
             const tiff = await fromUrl(tiffSource);
-
-
             const demResult = await simpleDem(tiff) // 5km
-
             setDem(demResult);
 
         } catch (err) {
             console.error('Error loading DEM:', err);
-            // setError(err.message);
-        } finally {
-            // setLoading(false);
         }
     };
     // calls dem to load on first render
     useEffect(() => {
-        loadSimpleDEM()
+        // if external dem is not loaded in use the default
+        if (!externalDem) {
+            loadSimpleDEM()
+        }
     }, []);
+    //update dem when external dem changes (load success)
+    useEffect(()=>{
+        if(externalDem){
+            setDem(externalDem)
+        }
+    },[externalDem])
 
     //on successful load of the dem this useffect is triggered
     useEffect(() => {

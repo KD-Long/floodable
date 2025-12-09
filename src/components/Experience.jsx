@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { extend, useFrame } from '@react-three/fiber';
 import { Perf } from 'r3f-perf'
 import { useControls } from 'leva'
@@ -11,7 +11,7 @@ import Board from './Board';
 import Terrain from './Terrain';
 import DEMTest from './DEMTest';
 
-const Experience = () => {
+const Experience = ({terrainDem}) => {
 
 
 
@@ -47,7 +47,7 @@ const Experience = () => {
         colorSnow: { value: '#ffffff' },
         colorRock: { value: '#bfbd8d' },
 
-        uSideLength:{ value: 2.0, min: 1.0, max: 10.0, step: 1.0,label: 'uSideLength (KM)' },
+        uSideLength: { value: 2.0, min: 1.0, max: 10.0, step: 1.0, label: 'uSideLength (KM)' },
 
 
     });
@@ -104,7 +104,7 @@ const Experience = () => {
 
         <Board />
 
-     
+
 
         {/* forwarding leva controls as refs to child -> shader */}
         <Terrain
@@ -122,6 +122,7 @@ const Experience = () => {
             colorRock={colorRock}
 
             uSideLength={uSideLength}
+            externalDem={terrainDem} // state passed down
         />
 
 

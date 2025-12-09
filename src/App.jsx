@@ -2,11 +2,15 @@
 import './App.css'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useState } from 'react'; // Add this import
+
 import Experience from './components/Experience'
 import DEMTest from './components/DEMTest'
 
 
 function App() {
+  const [terrainDem, setTerrainDem] = useState(null) // state down to terrain.jsx setter up to DEMTest.jsx
+
 
 
   return (
@@ -26,11 +30,11 @@ function App() {
           position: [-10, 6, -2]
         }}
       >
-        <Experience />
+        <Experience terrainDem={terrainDem} />
 
 
       </Canvas>
-      <DEMTest />
+      <DEMTest onDemLoaded={setTerrainDem} />
     </>
   )
 }

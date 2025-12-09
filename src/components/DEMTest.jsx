@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fromArrayBuffer } from 'geotiff';
-// import { loadDEM } from '../utils/loadDEM.js';
+import simpleDem from '../utils/simpleDem.js'; 
+
 import { getBBLatLon, trimToSquareArray, arrayOneDToTwoD, applyWaterDepth } from "./../utils/geoUtils";
 
 
@@ -8,13 +9,15 @@ import { getBBLatLon, trimToSquareArray, arrayOneDToTwoD, applyWaterDepth } from
  * Test component for loading and displaying DEM data
  * Add this to your Experience component to test the loadDEM function
  */
-const DEMTest = () => {
+const DEMTest = ({ onDemLoaded }) => {
+    // onDemLoaded is the call back to => setTerrainDem() 
+    // this means on successful load from api it update the setTerrain state
     const [loading, setLoading] = useState(false);
     const [dem, setDem] = useState(null);
     const [error, setError] = useState(null);
 
     // Input states
-   
+
     const [lat, setLat] = useState('-33.752292'); // Default Sydney area
     const [lon, setLon] = useState('151.296711');
     const [sideMeters, setSideMeters] = useState('10000'); // 20km default
@@ -23,7 +26,7 @@ const DEMTest = () => {
         const latNum = parseFloat(lat);
         const lonNum = parseFloat(lon);
         const sideMetersNum = parseFloat(sideMeters);
-    
+
         let { south, north, west, east } = getBBLatLon(latNum, lonNum, sideMetersNum)
         const url = `/getDem?south=${south}&north=${north}&west=${west}&east=${east}`;
         setLoading(true);
@@ -33,28 +36,29 @@ const DEMTest = () => {
             if (!response.ok) {
                 throw new Error('Failed to fetch DEM');
             }
-            
+
             // Get as ArrayBuffer for geotiff.js
             const arrayBuffer = await response.arrayBuffer();
-    
             const tiff = await fromArrayBuffer(arrayBuffer);
-            const image = await tiff.getImage();
-            
-            // Get basic info from the TIFF
-            const width = image.getWidth();
-            const height = image.getHeight();
-            
-            // Set dem with all the data we need for rendering
+
+            // Process using simpleDem (trims)
+            const demResult = await simpleDem(tiff);
+
+            // Set local state for display
             const demData = {
                 tiff,
-                image,
-                width,
-                height,
+                image: await tiff.getImage(),
+                width: demResult.width,
+                height: demResult.height,
                 bounds: { south, north, west, east }
             };
-            
             setDem(demData);
             console.log('DEM loaded successfully!', demData); // Log the actual data, not the state
+
+            // Call the callback to set external dem in terrain
+            if (onDemLoaded) { // check setter exists
+                onDemLoaded(demResult); // This calls setTerrainDem(demResult) in App.jsx
+            }
         } catch (err) {
             console.error('Error loading DEM [react]:', err);
             setError(err.message);
