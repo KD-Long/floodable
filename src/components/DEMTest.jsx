@@ -20,33 +20,41 @@ const DEMTest = () => {
     const [sideMeters, setSideMeters] = useState('10000'); // 20km default
 
     const fetchDEM = async () => {
-
         const latNum = parseFloat(lat);
         const lonNum = parseFloat(lon);
         const sideMetersNum = parseFloat(sideMeters);
-
+    
         let { south, north, west, east } = getBBLatLon(latNum, lonNum, sideMetersNum)
-        const url = `/getDem?south=${south}&north=${north}&west=${west}&east=${east}`; // our cloud function
+        const url = `/getDem?south=${south}&north=${north}&west=${west}&east=${east}`;
         setLoading(true);
         setError(null);
         try {
-
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch DEM');
             }
-            console.log("response: ", response)
+            
             // Get as ArrayBuffer for geotiff.js
             const arrayBuffer = await response.arrayBuffer();
-
+    
             const tiff = await fromArrayBuffer(arrayBuffer);
-            // ... rest of your code
-
-
-
-
-            setDem(tiff);
-            console.log('DEM loaded successfully [on click]!', dem);
+            const image = await tiff.getImage();
+            
+            // Get basic info from the TIFF
+            const width = image.getWidth();
+            const height = image.getHeight();
+            
+            // Set dem with all the data we need for rendering
+            const demData = {
+                tiff,
+                image,
+                width,
+                height,
+                bounds: { south, north, west, east }
+            };
+            
+            setDem(demData);
+            console.log('DEM loaded successfully!', demData); // Log the actual data, not the state
         } catch (err) {
             console.error('Error loading DEM [react]:', err);
             setError(err.message);
