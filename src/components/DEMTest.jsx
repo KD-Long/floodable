@@ -30,14 +30,7 @@ const DEMTest = () => {
         setLoading(true);
         setError(null);
         try {
-            // In Vite, files in public/ are served from root
-            // Make sure murray.tif is in public/geoData/ folder
-            // If not, copy it: mkdir -p public/geoData && cp geoData/murray.tif public/geoData/
-            //   const demResult = await loadDEM('/geoData/murray.tif', {
-            //     gridSize: 500,
-            //     targetSizeMeters: 10000,
-            //     noDataValue: -32768
-            //   });
+
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch DEM');
@@ -62,10 +55,10 @@ const DEMTest = () => {
         }
     };
 
-    useEffect(() => {
-        // Auto-load on mount (comment out if you want manual trigger)
-        // testLoadDEM();
-    }, []);
+    // useEffect(() => {
+    //     // Auto-load on mount (comment out if you want manual trigger)
+    //     // testLoadDEM();
+    // }, []);
 
     return (
         <div style={{
