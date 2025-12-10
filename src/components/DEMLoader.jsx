@@ -91,6 +91,7 @@ const DEMLoader = ({ onDemLoaded, onSideMetersLoad }) => {
             }
             if (onSideMetersLoad){ // this is the setter for sidemeters to scale shader elevation
                 onSideMetersLoad(preset.length)
+                console.log("side meters load: ", (preset.length))
 
             }
             } catch (err) {

@@ -10,7 +10,7 @@ import DEMLoader from './components/DEMLoader'
 
 function App() {
   const [terrainDem, setTerrainDem] = useState(null) // state down to terrain.jsx setter up to DEMLoader.jsx
-  const [sideMeters, setSideMeters] = useState(null)
+  const [sideMeters, setSideMeters] = useState(20000)
 
 
   return (
