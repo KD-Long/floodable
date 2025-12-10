@@ -5,12 +5,12 @@ import * as THREE from 'three'
 import { useState } from 'react'; // Add this import
 
 import Experience from './components/Experience'
-import DEMTest from './components/DEMTest'
+import DEMLoader from './components/DEMLoader'
 
 
 function App() {
-  const [terrainDem, setTerrainDem] = useState(null) // state down to terrain.jsx setter up to DEMTest.jsx
-
+  const [terrainDem, setTerrainDem] = useState(null) // state down to terrain.jsx setter up to DEMLoader.jsx
+  const [sideMeters, setSideMeters] = useState(null)
 
 
   return (
@@ -30,11 +30,11 @@ function App() {
           position: [-14, 12, 0]
         }}
       >
-        <Experience terrainDem={terrainDem} />
+        <Experience terrainDem={terrainDem} sideMeters={sideMeters} />
 
 
       </Canvas>
-      <DEMTest onDemLoaded={setTerrainDem} />
+      <DEMLoader onDemLoaded={setTerrainDem} onSideMetersLoad={setSideMeters} />
     </>
   )
 }

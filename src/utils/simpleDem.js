@@ -32,7 +32,25 @@ export default async function simpleDem(tiffFile) {
 
     // elevation2D = applyWaterDepth(elevation2D)
     // convert 2d array back to 1d such that we can feed it into our texture as a uniform as in the shader
-    let elevation1D = elevation2D.reduce((acc,cur )=> acc.concat(cur))
+    // let elevation1D = elevation2D.reduce((acc,cur )=> acc.concat(cur))
+    // Convert 2D to 1D using a more reliable method
+    // Use typed array and explicit indexing to avoid issues
+    const squareSize = elevation2D.length;
+    // Verify square
+    if (elevation2D[0].length !== squareSize) {
+        console.error(`Array not square after trim: ${elevation2D.length} rows × ${elevation2D[0].length} cols`);
+    }
+
+    const elevation1D = new Float32Array(squareSize * squareSize);
+    let idx = 0;
+    for (let i = 0; i < squareSize; i++) {
+        if (elevation2D[i].length !== squareSize) {
+            console.error(`Row ${i} has incorrect length: ${elevation2D[i].length}, expected ${squareSize}`);
+        }
+        for (let j = 0; j < squareSize; j++) {
+            elevation1D[idx++] = elevation2D[i][j];
+        }
+    }
     // console.log("flat elevation: ", elevation2D)
 
     // console.log("applyWaterDepth: ",applyWaterDepth(elevation2D))
@@ -55,10 +73,15 @@ export default async function simpleDem(tiffFile) {
     // console.log(getBBLatLon(-33.889582,151.199479,5000)) // neara
     // console.log(getBBLatLon(-33.889582,151.199479,50000)) // neara 50 km
     // console.log("neara: ",getBBLatLon(-33.889468,151.199508,20000)) // neara 20 km
+   
+
+
+    // console.log("mu: ",getBBLatLon(-20.252934,57.462887,20000))    // Center -20.252934,57.462887 mauritius 20km
+    // console.log("uluru: ",getBBLatLon(-25.346177,131.035658,20000))    //Center -25.346177,131.035658 uluru 20km
  
 
     // returns an object
-    return {elevations: elevation1D,width: elevation2D.length, height: elevation2D.length}
+    return {elevations: Array.from(elevation1D),width: elevation2D.length, height: elevation2D.length}
 }
 
 // const tex = new THREE.DataTexture(

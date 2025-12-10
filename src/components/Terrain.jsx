@@ -6,40 +6,36 @@ import * as THREE from 'three'
 import vertexShader from '../shaders/terrain/vertex.glsl'
 import fragmentShader from '../shaders/terrain/fragment.glsl'
 
-// import { loadDEM } from '../utils/loadDEM.js';
-import simpleDem from '../utils/simpleDem.js';
-import { fromUrl } from "geotiff";
 
-
+// Note dem load logic handled in DEMLoader 
+// geo logic from utils
 
 const Terrain = ({
-    uPositionFrequency,
-    uStrength,
-    uWarpFrequency,
-    uWarpStrength,
+
     uElevationScale,
     waterLevel,
+    uSideLength,
+    uFloodSpeed,
+
+    isFlooding,
+    resetFlooding,
+
     colorWaterDeep,
     colorWaterSurface,
     colorSand,
     colorGrass,
     colorSnow,
     colorRock,
-    uSideLength,
+
     externalDem // this is a prop dem value that may be passed on button load
 
 }) => {
     const csmRef = useRef();
     const csmDepthRef = useRef();
+    const waterMeshRef = useRef();
 
-    // const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState(null);
-    const [error, setError] = useState(null);
-    const [terrainBounds, setTerrainBounds] = useState(null);
-
+    // this state gets updated by DemLoader.jsx (setter passed up)
     const [dem, setDem] = useState(null); //object: {elevation,width,height}
-
-
 
 
 
@@ -48,10 +44,11 @@ const Terrain = ({
     // hence updating the shader (unlike uTime)
     const uniforms = useMemo(() => ({
         uTime: { value: 0 },
-        uPositionFrequency: { value: uPositionFrequency },
-        uStrength: { value: uStrength },
-        uWarpFrequency: { value: uWarpFrequency },
-        uWarpStrength: { value: uWarpStrength },
+        uFloodTime: { value: 0 },
+        // uPositionFrequency: { value: uPositionFrequency },
+        // uStrength: { value: uStrength },
+        // uWarpFrequency: { value: uWarpFrequency },
+        // uWarpStrength: { value: uWarpStrength },
         uColorWaterDeep: { value: new THREE.Color(colorWaterDeep) },
         uColorWaterSurface: { value: new THREE.Color(colorWaterSurface) },
         uColorSand: { value: new THREE.Color(colorSand) },
@@ -66,11 +63,11 @@ const Terrain = ({
                 THREE.FloatType
             )
         },
-        uElevationMin: { value: 0.0 },      // Minimum elevation (for offset)
+        // uElevationMin: { value: 0.0 },      // Minimum elevation (for offset)
         uElevationScale: { value: uElevationScale },
         uSideLength: { value: uSideLength },
-        uWaterLevel: { value: typeof waterLevel === 'number' ? waterLevel : 0.0 }  // Water level in world units (relative to terrain)
-    }), [uPositionFrequency, uStrength, uWarpFrequency, uWarpStrength, colorWaterDeep, colorWaterSurface, colorSand, colorGrass, colorSnow, colorRock])
+        uFloodSpeed: { value: uFloodSpeed },
+    }), [colorWaterDeep, colorWaterSurface, colorSand, colorGrass, colorSnow, colorRock])
 
 
     // Note we create the geo this way to preserve the mesh rotation
@@ -94,31 +91,6 @@ const Terrain = ({
     }, [])
 
 
-    const loadSimpleDEM = async () => {
-        // setLoading(true);
-        // setError(null);
-        try {
-            // const demResult = await simpleDem('/geoData/murray.tif') // 10km
-            // const demResult = await simpleDem('/geoData/murray_3km.tif') //3km
-            // const demResult = await simpleDem('/geoData/murray_1km.tif') // 1km
-            // const demResult = await simpleDem('/geoData/waverton_1km.tif') // 1km
-            // const demResult = await simpleDem('/geoData/neara_5km.tif') // 5km
-            const tiffSource = "/geoData/neara_20km.tif"
-            const tiff = await fromUrl(tiffSource);
-            const demResult = await simpleDem(tiff) // 5km
-            setDem(demResult);
-
-        } catch (err) {
-            console.error('Error loading DEM:', err);
-        }
-    };
-    // calls dem to load on first render
-    useEffect(() => {
-        // if external dem is not loaded in use the default
-        if (!externalDem) {
-            loadSimpleDEM()
-        }
-    }, []);
     //update dem when external dem changes (load success)
     useEffect(() => {
         if (externalDem) {
@@ -129,13 +101,37 @@ const Terrain = ({
     //on successful load of the dem this useffect is triggered
     useEffect(() => {
         if (dem) {
-            console.log("dem exists Yay", dem)
-            let width = dem.width
-            let height = dem.height
-            let elevations = new Float32Array(dem.elevations)
-            // console.log("elevations: ", elevations)
+            console.log("dem exists Yay", dem);
+            let width = dem.width;
+            let height = dem.height;
 
-            // at this point we know dem has loaded successfully and we can start setting our uElevationTexture
+            // Check texture size limits
+            const maxTextureSize = 8192;
+            if (width > maxTextureSize || height > maxTextureSize) {
+                console.error(`Texture size ${width}×${height} exceeds WebGL limit of ${maxTextureSize}`);
+                // You might want to downsample here or show an error
+                return;
+            }
+
+            console.log(`Creating texture: ${width} × ${height}`);
+
+            // Ensure elevations is a Float32Array
+            let elevations;
+            if (dem.elevations instanceof Float32Array) {
+                elevations = dem.elevations;
+            } else if (Array.isArray(dem.elevations)) {
+                elevations = new Float32Array(dem.elevations);
+            } else {
+                console.error('Invalid elevations data type:', typeof dem.elevations);
+                return;
+            }
+
+            // Verify array length matches expected size
+            const expectedLength = width * height;
+            if (elevations.length !== expectedLength) {
+                console.error(`Array length mismatch: got ${elevations.length}, expected ${expectedLength}`);
+                return;
+            }
 
             // Create DataTexture
             const texture = new THREE.DataTexture(
@@ -146,125 +142,60 @@ const Terrain = ({
                 THREE.FloatType
             );
 
-            // Enable texture filtering for smooth interpolation
-            // interpolates between 4 neighbouring pixels (smooth)
-            // texture at a larger size than its native resolution (without this we see grid lines)
             texture.magFilter = THREE.LinearFilter;
             texture.needsUpdate = true;
 
-            // Update uniform for both materials
+            // Update uniforms
             if (csmRef.current) {
                 csmRef.current.uniforms.uElevationTexture.value = texture;
-                // csmRef.current.uniforms.uElevationMin.value = minElevation;
-                // csmRef.current.uniforms.uElevationScale.value = autoScale;
             }
             if (csmDepthRef.current) {
                 csmDepthRef.current.uniforms.uElevationTexture.value = texture;
-                // csmDepthRef.current.uniforms.uElevationMin.value = minElevation;
-                // csmDepthRef.current.uniforms.uElevationScale.value = autoScale;
             }
         }
-    }, [dem])
+    }, [dem]);
 
-    // // This is trigged when result has successfully loaded
-    // // it converts 2d array -> 1D Float32Array -> data texture
-    // // then updates uniforms
-    // useEffect(() => {
-    //     if (result && result.elevationGrid) {
-    //         // Calculate elevation statistics for scaling
-    //         let minElevation = Infinity;
-    //         let maxElevation = -Infinity;
 
-    //         for (let row = 0; row < result.gridSize; row++) {
-    //             for (let col = 0; col < result.gridSize; col++) {
-    //                 const val = result.elevationGrid[row][col];
-    //                 if (val != null && !isNaN(val)) {
-    //                     minElevation = Math.min(minElevation, val);
-    //                     maxElevation = Math.max(maxElevation, val);
-    //                 }
-    //             }
-    //         }
-
-    //         const elevationRange = maxElevation - minElevation;
-
-    //         // Calculate automatic scale factor
-    //         // Makes elevation range visually proportional to terrain size (10% of width)
-    //         const terrainSizeUnits = 10;
-    //         const desiredHeightUnits = terrainSizeUnits * 0.1;
-    //         const autoScale = desiredHeightUnits / elevationRange;
-
-    //         // Convert 2D array to 1D Float32Array
-    //         const width = result.gridSize;
-    //         const height = result.gridSize;
-    //         const data = new Float32Array(width * height);
-
-    //         for (let row = 0; row < height; row++) {
-    //             for (let col = 0; col < width; col++) {
-    //                 const index = row * width + col;
-    //                 data[index] = result.elevationGrid[row][col];
-    //             }
-    //         }
-
-    //         // Create DataTexture
-    //         const texture = new THREE.DataTexture(
-    //             data,
-    //             width,
-    //             height,
-    //             THREE.RedFormat,
-    //             THREE.FloatType
-    //         );
-
-    //         // Enable texture filtering for smooth interpolation
-    //         // interpolates between 4 neighbouring pixels (smooth)
-    //         // texture at a larger size than its native resolution (without this we see grid lines)
-    //         texture.magFilter = THREE.LinearFilter;
-    //         texture.needsUpdate = true;
-
-    //         // Update uniform for both materials
-    //         if (csmRef.current) {
-    //             csmRef.current.uniforms.uElevationTexture.value = texture;
-    //             csmRef.current.uniforms.uElevationMin.value = minElevation;
-    //             csmRef.current.uniforms.uElevationScale.value = autoScale;
-    //         }
-    //         if (csmDepthRef.current) {
-    //             csmDepthRef.current.uniforms.uElevationTexture.value = texture;
-    //             csmDepthRef.current.uniforms.uElevationMin.value = minElevation;
-    //             csmDepthRef.current.uniforms.uElevationScale.value = autoScale;
-    //         }
-    //     }
-    // }, [result]);
 
     // Update water level when it changes (update uniform value directly, don't recreate)
+
+    // uniform update when leva controls change (if we dont do this shader will disappear eon change)
     useEffect(() => {
 
-        // update water level
-        const waterLevelValue = waterLevel ? waterLevel : 0.0;
-        if (csmRef.current?.uniforms?.uWaterLevel) {
-            csmRef.current.uniforms.uWaterLevel.value = waterLevelValue;
-        }
 
-        if (csmDepthRef.current?.uniforms?.uWaterLevel) {
-            csmDepthRef.current.uniforms.uWaterLevel.value = waterLevelValue;
-        }
 
         // update uElevationScale
         if (csmRef.current?.uniforms?.uElevationScale) {
-            csmRef.current.uniforms.uWaterLevel.value = uElevationScale;
+            csmRef.current.uniforms.uElevationScale.value = uElevationScale;
         }
-
         if (csmDepthRef.current?.uniforms?.uElevationScale) {
             csmDepthRef.current.uniforms.uElevationScale.value = uElevationScale;
         }
+
         // update uSideLength
         if (csmRef.current?.uniforms?.uSideLength) {
             csmRef.current.uniforms.uSideLength.value = uSideLength;
         }
-
         if (csmDepthRef.current?.uniforms?.uSideLength) {
             csmDepthRef.current.uniforms.uSideLength.value = uSideLength;
         }
+        // update uFloodSpeed
+        if (csmRef.current?.uniforms?.uFloodSpeed) {
+            csmRef.current.uniforms.uFloodSpeed.value = uFloodSpeed;
+        }
+        if (csmDepthRef.current?.uniforms?.uFloodSpeed) {
+            csmDepthRef.current.uniforms.uFloodSpeed.value = uFloodSpeed;
+        }
 
-    }, [waterLevel, uElevationScale, uSideLength]);
+    }, [uElevationScale, waterLevel, uSideLength, uFloodSpeed,]);
+
+
+    // on statenbeing toggled on and off we want to reset the flooding time uniform!
+    useEffect(() => {
+        csmDepthRef.current.uniforms.uFloodTime.value = 0
+        waterMeshRef.current.position.y = 0.001// max height 1
+
+    }, [resetFlooding])
 
     useFrame((state, delta) => {
 
@@ -273,8 +204,15 @@ const Terrain = ({
         // uPositionFrequency
 
         // update uTime on each tick to animate for both the material and depth material (for shadows)
-        // csmRef.current.uniforms.uTime.value = elapsedTime * 0.2
-        // csmDepthRef.current.uniforms.uTime.value = elapsedTime * 0.2
+        csmRef.current.uniforms.uTime.value = elapsedTime * 0.2
+        csmDepthRef.current.uniforms.uTime.value = elapsedTime * 0.2
+
+
+        if (isFlooding) {
+            csmDepthRef.current.uniforms.uFloodTime.value += delta * 0.2
+            waterMeshRef.current.position.y = Math.min(waterMeshRef.current.position.y + delta * 0.2 * uFloodSpeed, 1.0)// max height 1
+        }
+
 
 
     })
@@ -285,7 +223,9 @@ const Terrain = ({
     return (
         <>
             {/* Water */}
-            <mesh position={[0, 0.001, 0]}>
+            <mesh position={[0, 0.001, 0]}
+                ref={waterMeshRef}
+            >
                 <primitive object={water} />
                 <meshPhysicalMaterial transmission={1} roughness={0.1} />
             </mesh>
@@ -306,7 +246,7 @@ const Terrain = ({
                     // flatShading
                     metalness={0}
                     roughness={0.5}
-                    flatShading={false} // Explicitly enable smooth shading
+                // flatShading={false} // Explicitly enable smooth shading
 
                 // color={'#85d834'}
 

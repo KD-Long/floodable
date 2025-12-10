@@ -27,29 +27,37 @@ export function getBBLatLon(lat0, lon0, sideMeters) {
 // trims the original array2D (might be rectangle)
 
 export function trimToSquareArray(arr) {
-    if (arr.length == arr[0].length) {
-        console.log("Already square!")
-        return
+    const rows = arr.length;
+    const cols = arr[0].length;
+    
+    if (rows === cols) {
+        console.log("Already square!");
+        return rows;
     }
 
-    let minAxis = Math.min(arr.length, arr[0].length)
-    let maxAxis = Math.max(arr.length, arr[0].length)
-    let removalCount = Math.floor((maxAxis - minAxis) / 2);
-
-    //check width
-    if (arr[0].length == maxAxis) {
-        // trim width by
-        let start = 0 + removalCount
-        let end = maxAxis - removalCount
-        // foreach row reduce from both ends
+    const minAxis = Math.min(rows, cols);
+    
+    // Always trim to the minimum dimension to ensure perfect square
+    if (cols > rows) {
+        // Trim columns (width) - make each row shorter
+        const removalCount = cols - minAxis;
+        const start = Math.floor(removalCount / 2);
+        const end = cols - Math.ceil(removalCount / 2);
+        
         for (let i = 0; i < arr.length; i++) {
-            arr[i] = arr[i].slice(start, end) //
+            arr[i] = arr[i].slice(start, end);
         }
-    } else { // height must be the maximum
-        let start = 0 + removalCount
-        let end = maxAxis - removalCount
-        arr = arr.slice(start, end) // we are slicing off whole rows here
+    } else {
+        // Trim rows (height) - remove rows from array
+        const removalCount = rows - minAxis;
+        const start = Math.floor(removalCount / 2);
+        const end = rows - Math.ceil(removalCount / 2);
+        
+        // Remove rows from end first, then from start
+        arr.splice(end);
+        arr.splice(0, start);
     }
+    // note array edited inplace not return value
 }
 
 // given a 1d array convert it to a 2d array of width and height

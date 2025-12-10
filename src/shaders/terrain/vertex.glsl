@@ -1,10 +1,8 @@
 #include ../includes/simplexNoise2d.glsl
 
 uniform float uTime;
-uniform float uPositionFrequency;
-uniform float uStrength;
-uniform float uWarpFrequency;
-uniform float uWarpStrength;
+uniform float uFloodTime;
+uniform float uFloodSpeed;
 
 uniform sampler2D uElevationTexture;
 uniform float uElevationMin;    // Minimum elevation (meters)
@@ -111,8 +109,11 @@ void main() {
     vPosition = csm_Position;
     // note we are adding the uTime to the vPosition such that the frag shader has the same postion as updated by our warp
     // utime makes the snow noise stay with the original position other wise it looks animated
-    vPosition.xz = vPosition.xz + uTime;
+    // vPosition.xz = vPosition.xz + uTime;
+    // we are not moving snow so lets comment this out
+
     // if we adjust he .y we can get some pretty cool effects on water level
+    vPosition.y = vPosition.y - uFloodTime * uFloodSpeed; // opportunit to set max neg so we cant go above
     vDot = slope;
 
 }

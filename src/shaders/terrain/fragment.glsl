@@ -25,9 +25,9 @@ void main() {
     //water (water surface < -0.1) (water deep > -1.0)
     // values close to -1 -> 0 numbers close to -0.1 -> 1 (the mixing of the color)
     // also clamped so vals under -1 get scaled the same to 0
-    // float surfaceWaterMix = smoothstep(-1.0, -0.1, vPosition.y); // any value of -1.0 or greater -> 1
+    float surfaceWaterMix = smoothstep(-0.5, -0.1, vPosition.y); // any value of -1.0 or greater -> 1
     // this maps the 0 values to uColorWaterDeep and the 1 values uColorWaterSurface and mixes between the two
-    // color = mix(uColorWaterDeep, uColorWaterSurface, surfaceWaterMix);
+    color = mix(uColorWaterDeep, uColorWaterSurface, surfaceWaterMix);
 
     // sand (-.1 -> 0.0)
     // float sandMix = step(-0.1, vPosition.y); // any value -0.1 or greater -> 1

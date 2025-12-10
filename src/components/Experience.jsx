@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { extend, useFrame } from '@react-three/fiber';
 import { Perf } from 'r3f-perf'
-import { useControls } from 'leva'
+import { useControls, folder, button } from 'leva'
 import { Geometry, Base, Addition, Subtraction, ReverseSubtraction, Intersection, Difference } from '@react-three/csg'
 import { shaderMaterial, useTexture, OrbitControls, Environment, Icosahedron, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three'
@@ -9,48 +9,80 @@ import * as THREE from 'three'
 import { SphereGeometry } from 'three/src/Three.Core.js';
 import Board from './Board';
 import Terrain from './Terrain';
-import DEMTest from './DEMTest';
+import DEMTest from './DEMLoader';
 
-const Experience = ({terrainDem}) => {
+const Experience = ({ terrainDem, sideMeters }) => {
+
+    const [isFlooding, setIsFlooding] = useState(false)
+    const [resetFlooding, setResetFlooding] = useState(false)
 
 
 
 
     let {
-        uPositionFrequency,
-        uStrength,
-        uWarpFrequency,
-        uWarpStrength,
+        flood,
+        uFloodSpeed,
+        resetFlood,
+
         uElevationScale,
         waterLevel,
+        uSideLength,
+
         colorWaterDeep,
         colorWaterSurface,
         colorSand,
         colorGrass,
         colorSnow,
         colorRock,
-        uSideLength
+
+
     } = useControls({
-        // bgColor: { value: '#1d1f2a', label: 'Background Color' },
-        uPositionFrequency: { value: 0.2, min: 0, max: 1.0, step: 0.001 },
-        uStrength: { value: 2.0, min: 0.0, max: 10.0, step: 0.001 },
-        uWarpFrequency: { value: 5.0, min: 0.0, max: 10.0, step: 0.001 },
-        uWarpStrength: { value: 0.5, min: 0.0, max: 1.0, step: 0.001 },
-        uElevationScale: { value: 1.00, min: 0.001, max: 20.0, step: 0.01 },
 
-        waterLevel: { value: 0.0, min: -2.0, max: 2.0, step: 0.01, label: 'Water Level' },
+        Flooding: folder({
+            flood: { value: false },
+            resetFlooding: button(() => {
+                setResetFlooding(prev => !prev);
+            }), // Boolean toggle for reset
+            uFloodSpeed: { value: 0.2, min: 0.01, max: 1.0, step: 0.01 },
 
-        colorWaterDeep: { value: '#002b3d' },
-        colorWaterSurface: { value: '#66a8ff' },
-        colorSand: { value: '#ffe894' },
-        colorGrass: { value: '#85d534' },
-        colorSnow: { value: '#ffffff' },
-        colorRock: { value: '#bfbd8d' },
+        }),
 
-        uSideLength: { value: 2.0, min: 1.0, max: 10.0, step: 1.0, label: 'uSideLength (KM)' },
+        uElevationScale: { value: 3.00, min: 0.001, max: 6.0, step: 0.01 },
+        uSideLength: { value: sideMeters / 1000, min: 1.0, max: 100.0, step: 1.0, label: 'uSideLength (KM)' },
 
+        Colors: folder(
+            {
+                colorWaterDeep: { value: '#002b3d' },
+                colorWaterSurface: { value: '#66a8ff' },
+                colorSand: { value: '#ffe894' },
+                colorGrass: { value: '#85d534' },
+                colorSnow: { value: '#ffffff' },
+                colorRock: { value: '#bfbd8d' },
+            },
+            { collapsed: true }
+        )
 
     });
+    // Toggle state tusch the uFloodTime increases while on
+    useEffect(() => {
+        if (flood) { // we want to be incrementing 
+            console.log('We are flooding');
+            // Reset logic here
+            // You might need to manually reset the Leva value or use a ref
+            setIsFlooding(true)
+        } else {
+            setIsFlooding(false)
+
+        }
+    }, [flood]);
+
+    // useEffect(() => {
+    //     // this is just a state toggle we don't care about the actual value
+    //     setResetFlooding(!resetFlood)
+
+    // }, [resetFlood]);
+
+
 
 
 
@@ -108,12 +140,14 @@ const Experience = ({terrainDem}) => {
 
         {/* forwarding leva controls as refs to child -> shader */}
         <Terrain
-            uPositionFrequency={uPositionFrequency}
-            uStrength={uStrength}
-            uWarpFrequency={uWarpFrequency}
-            uWarpStrength={uWarpStrength}
+
             uElevationScale={uElevationScale}
-            waterLevel={waterLevel}
+            uSideLength={uSideLength}
+
+            uFloodSpeed={uFloodSpeed}
+            isFlooding={isFlooding} // true when leva controls turns it on
+            resetFlooding={resetFlooding} // more state being passed
+
             colorWaterDeep={colorWaterDeep}
             colorWaterSurface={colorWaterSurface}
             colorSand={colorSand}
@@ -121,7 +155,7 @@ const Experience = ({terrainDem}) => {
             colorSnow={colorSnow}
             colorRock={colorRock}
 
-            uSideLength={uSideLength}
+
             externalDem={terrainDem} // state passed down
         />
 
